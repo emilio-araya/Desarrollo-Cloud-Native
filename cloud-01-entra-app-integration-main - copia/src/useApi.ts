@@ -1,27 +1,25 @@
-// src/useApi.ts
-import { useMsal } from "@azure/msal-react";
-import { loginRequest } from "./authConfig";
+import { useAuth } from "react-oidc-context";
 
 export function useApi() {
-  const { instance, accounts } = useMsal();
+  const auth = useAuth();
 
-  const fetchWithToken = async (url: string) => {
-    const account = accounts[0] || instance.getActiveAccount();
-    if (!account) {
-      throw new Error("No hay una cuenta activa");
+  const fetchWithToken = async (
+    url: string,
+    options: RequestInit = {},
+  ) => {
+    const accessToken = auth.user?.access_token;
+
+    if (!accessToken) {
+      throw new Error("No hay un token de acceso de Amazon Cognito");
     }
 
-    // Solicitar token silenciosamente (sin redirigir al usuario)
-    const response = await instance.acquireTokenSilent({
-      ...loginRequest,
-      account,
-    });
+    const headers = new Headers(options.headers);
 
-    // Adjuntar token en el header Bearer
+    headers.set("Authorization", `Bearer ${accessToken}`);
+
     return fetch(url, {
-      headers: {
-        Authorization: `Bearer ${response.accessToken}`,
-      },
+      ...options,
+      headers,
     });
   };
 

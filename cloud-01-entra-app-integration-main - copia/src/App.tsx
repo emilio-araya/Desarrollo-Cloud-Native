@@ -1,28 +1,43 @@
-// src/App.tsx
-import { useMsal, useIsAuthenticated } from "@azure/msal-react";
-import { InteractionStatus } from "@azure/msal-browser";
-import { loginRequest } from "./authConfig";
+import { useAuth } from "react-oidc-context";
 import { ProtectedData } from "./ProtectedData";
 import "./App.css";
 
 export default function App() {
-  const { instance, accounts, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
-  const currentUser = accounts[0];
+  const auth = useAuth();
 
   const handleLogin = () => {
-    if (inProgress === InteractionStatus.None) {
-      instance.loginRedirect(loginRequest).catch((e) => console.error(e));
-    }
+    auth.signinRedirect().catch((e) => console.error(e));
   };
 
   const handleLogout = () => {
-    if (inProgress === InteractionStatus.None) {
-      instance
-        .logoutRedirect({ postLogoutRedirectUri: "/" })
-        .catch((e) => console.error(e));
-    }
+    // Cerramos la sesión local del cliente OIDC
+    auth.removeUser();
+
+    // Cerramos también la sesión de Cognito
+    const clientId = "69su5f4eqp4e87su81drkvv3qd";
+    const logoutUri = encodeURIComponent("http://localhost:5173");
+
+    window.location.href =
+      `https://us-east-1k556wtvmf.auth.us-east-1.amazoncognito.com/logout` +
+      `?client_id=${clientId}&logout_uri=${logoutUri}`;
   };
+
+  if (auth.isLoading) {
+    return (
+      <div className="layout">
+        <main className="container">
+          <div className="card text-center">
+            <h2>Cargando...</h2>
+            <p className="subtitle">
+              Verificando la sesión con Amazon Cognito.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const currentUser = auth.user?.profile;
 
   return (
     <div className="layout">
@@ -30,12 +45,12 @@ export default function App() {
         <div className="logo">
           ⚡ <span>Portal MiApp</span>
         </div>
+
         <div>
-          {isAuthenticated ? (
+          {auth.isAuthenticated ? (
             <button
               className="btn btn-logout"
               onClick={handleLogout}
-              disabled={inProgress !== InteractionStatus.None}
             >
               Cerrar Sesión
             </button>
@@ -43,7 +58,6 @@ export default function App() {
             <button
               className="btn btn-login"
               onClick={handleLogin}
-              disabled={inProgress !== InteractionStatus.None}
             >
               Iniciar Sesión
             </button>
@@ -52,46 +66,61 @@ export default function App() {
       </header>
 
       <main className="container">
-        {isAuthenticated ? (
+        {auth.isAuthenticated ? (
           <div className="card">
             <div className="avatar">
               {currentUser?.name
-                ? currentUser.name.charAt(0).toUpperCase()
+                ? String(currentUser.name).charAt(0).toUpperCase()
                 : "U"}
             </div>
-            <h2>¡Bienvenido, {currentUser?.name || "Usuario"}!</h2>
-            <p className="subtitle">Autenticado con Microsoft Entra ID</p>
+
+            <h2>
+              ¡Bienvenido, {currentUser?.name || "Usuario"}!
+            </h2>
+
+            <p className="subtitle">
+              Autenticado con Amazon Cognito
+            </p>
 
             <div className="user-details">
               <div className="detail-item">
                 <strong>Correo / Usuario:</strong>
-                <span>{currentUser?.username}</span>
+                <span>
+                  {currentUser?.email ||
+                    currentUser?.preferred_username ||
+                    "No disponible"}
+                </span>
               </div>
+
               <div className="detail-item">
-                <strong>Tenant ID:</strong>
-                <code>{currentUser?.tenantId}</code>
+                <strong>User Pool ID:</strong>
+                <code>us-east-1_K556WtvmF</code>
               </div>
             </div>
 
-            {/* Integración del componente protegido + Interceptor/API */}
-            <hr style={{ margin: "1.5rem 0", borderColor: "#eee" }} />
+            <hr
+              style={{
+                margin: "1.5rem 0",
+                borderColor: "#eee",
+              }}
+            />
+
             <ProtectedData />
           </div>
         ) : (
           <div className="card text-center">
             <h2>Acceso Requerido</h2>
+
             <p className="subtitle">
               Para ingresar al sistema debes validar tus credenciales
-              corporativas o institucionales.
+              mediante Amazon Cognito.
             </p>
+
             <button
               className="btn btn-login btn-lg"
               onClick={handleLogin}
-              disabled={inProgress !== InteractionStatus.None}
             >
-              {inProgress !== InteractionStatus.None
-                ? "Cargando..."
-                : "Iniciar Sesión con Microsoft"}
+              Iniciar Sesión con Amazon Cognito
             </button>
           </div>
         )}
