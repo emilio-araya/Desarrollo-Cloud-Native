@@ -1,14 +1,14 @@
 # Cloud Native — Amazon Cognito
 
-Proyecto de desarrollo Cloud Native que implementa autenticación de usuarios mediante **Amazon Cognito**, utilizando React, Vite, TypeScript y OpenID Connect.
+Proyecto académico de la asignatura **Desarrollo Cloud Native** que implementa autenticación de usuarios mediante **Amazon Cognito**, utilizando React, Vite, TypeScript y OpenID Connect.
 
-Esta versión corresponde a la rama **`aws`**, creada a partir del proyecto original que utilizaba autenticación mediante **Microsoft Entra ID**.
+Esta versión corresponde a la rama **`aws`**, desarrollada a partir del proyecto original que utilizaba autenticación mediante **Microsoft Entra ID**.
 
 ---
 
 ## 📌 Descripción
 
-El objetivo de esta etapa del proyecto fue migrar el sistema de autenticación desde **Microsoft Entra ID / MSAL** hacia **Amazon Cognito**.
+El objetivo de esta etapa del proyecto es migrar el sistema de autenticación desde **Microsoft Entra ID / MSAL** hacia **Amazon Cognito**.
 
 La aplicación permite:
 
@@ -17,8 +17,8 @@ La aplicación permite:
 * Obtener un token JWT mediante OpenID Connect.
 * Mostrar información básica del usuario autenticado.
 * Proteger una sección de la aplicación para usuarios autenticados.
-* Utilizar el token Bearer para futuras consultas a APIs protegidas.
-* Cerrar sesión mediante el endpoint de logout de Cognito.
+* Preparar el uso del token Bearer para futuras consultas a APIs protegidas.
+* Cerrar sesión mediante el mecanismo de logout de Cognito.
 
 ---
 
@@ -44,38 +44,28 @@ Esta implementación se encuentra en la rama:
 aws
 ```
 
-La rama `aws` fue creada a partir de `main` para mantener separada la implementación de Amazon Cognito.
-
-Actualmente la rama contiene un commit adicional respecto a `main`:
-
-```text
-d083dae
-Migrar autenticación de Entra ID a Amazon Cognito
-```
+La rama `aws` mantiene separada la implementación de Amazon Cognito respecto de la implementación principal basada en Microsoft Entra ID.
 
 ---
 
 # ☁️ Configuración de Amazon Cognito
 
-Se creó y configuró un **User Pool** en Amazon Cognito.
+Para esta etapa se configuró un **User Pool** de Amazon Cognito en la región `us-east-1` y un App Client destinado a una aplicación SPA.
 
-### User Pool
+La aplicación utiliza un cliente **sin `client secret`**, apropiado para una aplicación que se ejecuta en el navegador.
 
-```text
-User Pool Name:
-User pool - l4955l
-```
-
-### User Pool ID
-
-```text
-us-east-1_K556WtvmF
-```
+> Los identificadores mostrados en la configuración corresponden al entorno académico utilizado durante el desarrollo. Los secretos reales de Cognito no deben almacenarse en el repositorio.
 
 ### Región
 
 ```text
 us-east-1
+```
+
+### User Pool
+
+```text
+User Pool configurado para el proyecto Cloud Native
 ```
 
 ### App Client
@@ -84,29 +74,17 @@ us-east-1
 cloud-native-app
 ```
 
-### App Client ID
-
-```text
-69su5f4eqp4e87su81drkvv3qd
-```
-
-La aplicación utiliza un cliente sin `client secret`, adecuado para una aplicación SPA ejecutándose en el navegador.
-
 ---
 
 # 🔐 OAuth / OpenID Connect
 
-La aplicación utiliza:
+La aplicación utiliza el flujo:
 
 ```text
 Authorization Code Grant
 ```
 
-El issuer de Cognito utilizado por la aplicación es:
-
-```text
-https://cognito-idp.us-east-1.amazonaws.com/us-east-1_K556WtvmF
-```
+La autenticación se realiza mediante **OpenID Connect (OIDC)** utilizando Amazon Cognito.
 
 La URL de redirección utilizada durante el desarrollo local es:
 
@@ -122,37 +100,30 @@ email
 phone
 ```
 
-> Se utiliza `phone` porque es uno de los scopes habilitados en el App Client de Cognito.
+> Se utiliza `phone` porque forma parte de los scopes habilitados para el App Client utilizado durante esta práctica.
 
 ---
 
 # 📦 Dependencias agregadas
 
-Para realizar la migración se instalaron las siguientes dependencias:
+Para realizar la migración se incorporaron las siguientes dependencias:
 
 ```text
 oidc-client-ts
 react-oidc-context
 ```
 
-Instalación realizada mediante:
+Instalación:
 
-```powershell
+```bash
 pnpm add oidc-client-ts react-oidc-context
 ```
 
-Versiones utilizadas:
-
-```text
-oidc-client-ts     3.5.0
-react-oidc-context 3.3.1
-```
+Estas librerías permiten integrar el flujo OIDC con React y administrar la sesión del usuario autenticado.
 
 ---
 
-# 📁 Archivos modificados
-
-Durante la migración se modificaron principalmente los siguientes archivos:
+# 📁 Estructura utilizada
 
 ```text
 cloud-01-entra-app-integration-main - copia/
@@ -167,24 +138,26 @@ cloud-01-entra-app-integration-main - copia/
     └── useApi.ts
 ```
 
+La carpeta conserva el nombre utilizado originalmente en el proyecto académico para mantener la estructura y el historial de trabajo.
+
 ---
 
 # ⚙️ Configuración de autenticación
 
-La configuración principal se encuentra en:
+La configuración principal de Cognito se encuentra actualmente en:
 
 ```text
 src/main.tsx
 ```
 
-Se utiliza `AuthProvider` de `react-oidc-context`.
+En esta etapa se utiliza `AuthProvider` de `react-oidc-context` para proporcionar el contexto de autenticación a la aplicación React.
 
-Configuración utilizada:
+Conceptualmente, la configuración utiliza:
 
 ```typescript
 const cognitoAuthConfig = {
-  authority: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_K556WtvmF',
-  client_id: '69su5f4eqp4e87su81drkvv3qd',
+  authority: 'https://cognito-idp.us-east-1.amazonaws.com/<USER_POOL_ID>',
+  client_id: '<APP_CLIENT_ID>',
   redirect_uri: 'http://localhost:5173',
   response_type: 'code',
   scope: 'openid email phone',
@@ -201,6 +174,8 @@ La aplicación se envuelve con:
 
 Esto permite utilizar `useAuth()` en los componentes React.
 
+> Como mejora futura, la configuración de Cognito puede trasladarse a variables de entorno de Vite para separar configuración de código fuente.
+
 ---
 
 # 🔑 Inicio de sesión
@@ -213,13 +188,7 @@ useAuth()
 
 para comprobar el estado de autenticación.
 
-Cuando el usuario selecciona:
-
-```text
-Iniciar Sesión con Amazon Cognito
-```
-
-se ejecuta:
+Cuando el usuario selecciona la opción de inicio de sesión, se ejecuta:
 
 ```typescript
 auth.signinRedirect()
@@ -239,20 +208,12 @@ Una vez autenticado, la aplicación obtiene la información del usuario desde:
 auth.user?.profile
 ```
 
-La interfaz muestra información como:
+La interfaz permite trabajar con información como:
 
 * Nombre del usuario.
 * Correo electrónico.
 * Nombre de usuario, si está disponible.
-* User Pool ID.
 * Estado de autenticación.
-
-La pantalla muestra además:
-
-```text
-¡Bienvenido, Usuario!
-Autenticado con Amazon Cognito
-```
 
 ---
 
@@ -266,7 +227,7 @@ src/ProtectedData.tsx
 
 representa una sección disponible solamente para usuarios autenticados.
 
-Antes de obtener el token se comprueba:
+Antes de utilizar el token se comprueba:
 
 ```typescript
 auth.user?.access_token
@@ -274,15 +235,9 @@ auth.user?.access_token
 
 Si no existe un token válido, se muestra un mensaje de acceso denegado.
 
-Cuando existe un token, se muestra información de prueba indicando que se obtuvo correctamente el JWT de Amazon Cognito.
+Cuando existe un token, la aplicación puede demostrar que el flujo de autenticación entregó correctamente un **Access Token JWT de Amazon Cognito**.
 
-Por seguridad, la interfaz solamente muestra una parte truncada del token:
-
-```text
-xxxxxxxxxxxxxxxxxxxx...
-```
-
-No se muestra el JWT completo en pantalla.
+Por seguridad, la interfaz no necesita mostrar el JWT completo.
 
 ---
 
@@ -324,47 +279,26 @@ Esto deja preparada la aplicación para comunicarse posteriormente con una API p
 
 # 🚪 Cierre de sesión
 
-El cierre de sesión utiliza el endpoint de logout administrado por Amazon Cognito.
+El cierre de sesión utiliza el mecanismo de logout administrado por Amazon Cognito.
 
-La aplicación elimina primero el usuario local:
+La aplicación elimina primero el usuario local mediante:
 
 ```typescript
 auth.removeUser()
 ```
 
-y posteriormente redirige al endpoint:
+y posteriormente puede redirigir al endpoint de logout configurado para Cognito.
 
-```text
-/cognito/logout
-```
-
-utilizando el App Client ID y la URL de salida configurada.
-
-La intención es cerrar correctamente la sesión de Cognito y regresar a:
-
-```text
-http://localhost:5173
-```
+La intención es cerrar correctamente la sesión y regresar a la aplicación local.
 
 ---
 
 # 🧪 Ejecución del proyecto
 
-Primero ingresar al directorio del proyecto:
+Ingresar al directorio del proyecto y ejecutar:
 
-```powershell
-cd "C:\Users\MP-Alumno\Downloads\Desarrollo-Cloud-Native\cloud-01-entra-app-integration-main - copia"
-```
-
-Instalar dependencias:
-
-```powershell
+```bash
 pnpm install
-```
-
-Ejecutar el servidor de desarrollo:
-
-```powershell
 pnpm dev
 ```
 
@@ -378,13 +312,13 @@ http://localhost:5173
 
 # ✅ Comprobación de TypeScript
 
-Durante la migración se utilizó:
+Durante el desarrollo se puede comprobar el proyecto mediante:
 
-```powershell
+```bash
 pnpm exec tsc --noEmit
 ```
 
-para comprobar que el proyecto no presentara errores de TypeScript.
+Esto permite verificar que no existan errores de TypeScript antes de continuar con las pruebas de autenticación.
 
 ---
 
@@ -399,7 +333,7 @@ El proyecto originalmente utilizaba:
 
 para autenticación mediante Microsoft Entra ID.
 
-La nueva implementación utiliza:
+La implementación de esta rama utiliza:
 
 ```text
 oidc-client-ts
@@ -432,66 +366,44 @@ OpenID Connect
 Amazon Cognito
 ```
 
+Esta migración permite comparar dos proveedores de identidad diferentes utilizando conceptos y estándares comunes de autenticación.
+
 ---
 
 # ⚠️ Estado actual
 
-La integración de Amazon Cognito está implementada y subida a GitHub en la rama:
+La integración de Amazon Cognito está implementada en la rama:
 
 ```text
 aws
 ```
 
-El flujo de redirección hacia Cognito fue probado correctamente.
+El flujo de redirección hacia Cognito forma parte de la implementación actual y la aplicación está preparada para trabajar con la sesión y el Access Token entregados por Cognito.
 
-También se comprobó que Cognito presenta la pantalla de inicio de sesión.
+La etapa de prueba continúa enfocada en validar el flujo completo de autenticación con el usuario configurado en Cognito.
 
-Queda pendiente completar/prueba final con las credenciales del usuario creado en Cognito.
+### Progreso
 
-El problema pendiente corresponde a las credenciales/configuración del usuario de Cognito y no a la subida del código a GitHub.
+* [x] Migración desde Microsoft Entra ID hacia Amazon Cognito
+* [x] Integración de OpenID Connect
+* [x] Integración de `react-oidc-context`
+* [x] Flujo de redirección hacia Cognito
+* [x] Gestión del usuario autenticado desde React
+* [x] Preparación del Access Token para peticiones Bearer
+* [ ] Validación final del inicio de sesión con el usuario de Cognito
+* [ ] Integración con una API protegida
+* [ ] Configuración mediante variables de entorno
+* [ ] Limpieza de dependencias y configuración antigua de Entra ID
 
 ---
 
-# 📌 Git
+# 🔐 Seguridad
 
-Repositorio:
+Las credenciales y configuraciones sensibles **no deben almacenarse directamente en el repositorio**.
 
-```text
-Desarrollo-Cloud-Native
-```
+Los secretos reales deben mantenerse fuera del código fuente y configurarse mediante mecanismos seguros.
 
-Rama:
-
-```text
-aws
-```
-
-Commit de la migración:
-
-```text
-d083dae
-```
-
-Mensaje:
-
-```text
-Migrar autenticación de Entra ID a Amazon Cognito
-```
-
-La rama remota está sincronizada con GitHub:
-
-```text
-aws -> origin/aws
-```
-
-Estado final comprobado:
-
-```text
-On branch aws
-Your branch is up to date with 'origin/aws'.
-
-nothing to commit, working tree clean
-```
+Los identificadores públicos de una aplicación SPA, como un `client_id`, no equivalen a un `client_secret`; aun así, mantener la configuración mediante variables de entorno facilita separar código y configuración.
 
 ---
 
@@ -499,30 +411,23 @@ nothing to commit, working tree clean
 
 Para continuar con el proyecto:
 
-1. Solucionar/probar las credenciales del usuario de Amazon Cognito.
-2. Confirmar el inicio de sesión completo.
-3. Confirmar la visualización de los datos del usuario.
-4. Probar el cierre de sesión.
-5. Probar la obtención del JWT.
-6. Si se requiere, conectar `fetchWithToken()` con una API protegida.
-7. Eliminar posteriormente las dependencias antiguas de MSAL si ya no son necesarias.
-8. Revisar y eliminar archivos de configuración de Entra ID que ya no tengan uso.
-9. Considerar mover la configuración de Cognito a variables de entorno de Vite.
+1. Completar la validación del inicio de sesión con el usuario de Amazon Cognito.
+2. Confirmar la visualización de los datos del usuario autenticado.
+3. Probar el cierre de sesión.
+4. Confirmar la obtención y utilización del JWT.
+5. Conectar `fetchWithToken()` con una API protegida.
+6. Trasladar la configuración de Cognito a variables de entorno de Vite.
+7. Revisar y retirar las dependencias o archivos de configuración de Entra ID que ya no sean necesarios.
+8. Continuar con las siguientes actividades de la asignatura.
 
 ---
 
-## 👨‍💻 Autor:  Emilio Araya
+# 👨‍💻 Autor
+
+**Emilio Araya**
+
+Estudiante de **Ingeniería en Informática** 🇨🇱
 
 Proyecto académico de la asignatura **Desarrollo Cloud Native**.
 
-Repositorio:
-
-```text
-Desarrollo-Cloud-Native
-```
-
-Implementación actual:
-
-```text
-Rama aws — Amazon Cognito
-```
+Este repositorio documenta el avance práctico de la asignatura y la evolución desde una implementación basada en Microsoft Entra ID hacia una implementación basada en Amazon Cognito.
