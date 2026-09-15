@@ -206,11 +206,14 @@ La idea no es solamente aprender una plataforma específica, sino entender **los
 ```text
 Desarrollo-Cloud-Native/
 │
-├── cloud-01-entra-app-integration-main/
+├── cloud-01-entra-app-integration-main - copia/
 │   ├── src/
 │   ├── public/
 │   ├── package.json
 │   └── README.md
+│
+├── backend/
+│   └── ...
 │
 ├── ...
 │
@@ -350,9 +353,9 @@ Las configuraciones locales utilizan archivos `.env`, los cuales se encuentran e
 Ejemplo:
 
 ```env
-VITE_CLIENT_ID=...
-VITE_AUTHORITY=...
-VITE_REDIRECT_URI=...
+VITE_AZURE_CLIENT_ID=...
+VITE_AZURE_TENANT_ID=...
+VITE_AZURE_REDIRECT_URI=http://localhost:5173
 ```
 
 Los valores reales deben configurarse localmente o mediante mecanismos seguros de configuración y secretos.
