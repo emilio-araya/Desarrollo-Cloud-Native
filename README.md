@@ -126,7 +126,7 @@ Estas librerías permiten integrar el flujo OIDC con React y administrar la sesi
 # 📁 Estructura utilizada
 
 ```text
-cloud-01-entra-app-integration-main - copia/
+cloud-01-entra-app-integration/
 │
 ├── package.json
 ├── pnpm-lock.yaml
